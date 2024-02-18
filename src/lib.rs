@@ -2,6 +2,8 @@
 
 #![no_std]
 
+use smoltcp::wire::IpAddress;
+
 #[cfg(feature = "client")]
 pub mod client;
 #[cfg(feature = "server")]
@@ -9,6 +11,9 @@ pub mod server;
 
 /// IANA port.
 pub const PORT: u16 = 4876;
+
+/// Broadcast address.
+pub const BCAST_ADDR: IpAddress = IpAddress::v4(239, 255, 60, 60);
 
 /// Flags bitfield.
 pub(crate) struct Flags(u8);
