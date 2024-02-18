@@ -8,7 +8,7 @@ Add an entry to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-smoltcp_tritium_can = "0.1.0"
+smoltcp-tritium-can = "0.1.0"
 ```
 
 ## Minimum supported Rust version
