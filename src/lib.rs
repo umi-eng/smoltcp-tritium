@@ -53,3 +53,17 @@ impl Default for BusNumber {
         BusNumber(13)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bus_number() {
+        assert!(BusNumber::try_from(0).is_ok());
+        assert!(BusNumber::try_from(13).is_ok());
+        assert!(BusNumber::try_from(15).is_ok());
+        assert!(BusNumber::try_from(16).is_err());
+        assert!(BusNumber::try_from(255).is_err());
+    }
+}
