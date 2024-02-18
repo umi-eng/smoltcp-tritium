@@ -7,6 +7,9 @@ pub mod client;
 #[cfg(feature = "server")]
 pub mod server;
 
+/// IANA port.
+pub const PORT: u16 = 4876;
+
 /// Flags bitfield.
 pub(crate) struct Flags(u8);
 
