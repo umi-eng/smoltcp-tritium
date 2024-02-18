@@ -2,7 +2,7 @@
 
 #![no_std]
 
-use smoltcp::wire::IpAddress;
+use smoltcp::{time::Duration, wire::IpAddress};
 
 #[cfg(feature = "client")]
 pub mod client;
@@ -17,6 +17,9 @@ pub const BCAST_ADDR: IpAddress = IpAddress::v4(239, 255, 60, 60);
 
 /// Protocol version identifier.
 pub(crate) const PROTO_VER: u64 = 0x5472697469756;
+
+/// Heartbeat interval.
+pub const HEARTBEAT_DURATION: Duration = Duration::from_secs(1);
 
 /// Flags bitfield.
 pub(crate) struct Flags(u8);
