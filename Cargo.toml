@@ -1,0 +1,25 @@
+[package]
+name = "smoltcp-tritium-can"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+
+[dependencies]
+smoltcp = { version = "0.11.0", default-features = false, features = [
+    "socket-tcp",
+    "socket-udp",
+    "proto-ipv4",
+    "medium-ethernet",
+] }
+
+[features]
+default = ["server", "client"]
+
+client = ["client-tcp", "client-udp"]
+client-tcp = []
+client-udp = []
+
+server = ["server-tcp", "server-udp"]
+server-tcp = []
+server-udp = []
