@@ -29,3 +29,27 @@ bitflags::bitflags! {
         const FrameExtendedId = 1 << 0;
     }
 }
+
+/// Bus number
+#[derive(Clone, Copy)]
+pub struct BusNumber(u8);
+
+impl TryFrom<u8> for BusNumber {
+    type Error = ();
+
+    /// Try create a [`BusNumber`] from a [`u8`] returning an error if the input is higher than `0xF`.
+    fn try_from(value: u8) -> Result<BusNumber, Self::Error> {
+        if value > 0xF {
+            Err(())
+        } else {
+            Ok(BusNumber(value))
+        }
+    }
+}
+
+impl Default for BusNumber {
+    /// Use the default bus number of `13`.
+    fn default() -> BusNumber {
+        BusNumber(13)
+    }
+}
