@@ -28,8 +28,8 @@ bitflags::bitflags! {
     impl Flags: u8 {
         const Heartbeat = 1 << 7;
         const Settings = 1 << 6;
-        const FrameRtr = 1 << 1;
-        const FrameExtendedId = 1 << 0;
+        const Remote = 1 << 1;
+        const Extended = 1 << 0;
     }
 }
 
