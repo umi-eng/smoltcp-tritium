@@ -6,6 +6,7 @@ edition = "2021"
 [lib]
 
 [dependencies]
+defmt = { version = "0.3.6", optional = true }
 smoltcp = { version = "0.11.0", default-features = false, features = [
     "socket-tcp",
     "socket-udp",
@@ -23,3 +24,5 @@ client-udp = []
 server = ["server-tcp", "server-udp"]
 server-tcp = []
 server-udp = []
+
+defmt-03 = ["dep:defmt", "smoltcp/defmt"]
