@@ -15,6 +15,9 @@ pub const PORT: u16 = 4876;
 /// Broadcast address.
 pub const BCAST_ADDR: IpAddress = IpAddress::v4(239, 255, 60, 60);
 
+/// Protocol version identifier.
+pub(crate) const PROTO_VER: u64 = 0x5472697469756;
+
 /// Flags bitfield.
 pub(crate) struct Flags(u8);
 
