@@ -39,9 +39,6 @@ pub struct Server {
     last_heartbeat: Instant,
 }
 
-/// Error kind.
-pub enum Error {}
-
 impl Server {
     /// Creates a new [`Server`] instance.
     pub fn new<'a>(
@@ -52,7 +49,7 @@ impl Server {
         now: Instant,
         bus_number: BusNumber,
         data_rate: u16,
-    ) -> Result<Server, Error> {
+    ) -> Server {
         let socket = Socket::new(rx_buffer, tx_buffer);
         let handle = sockets.add(socket);
 
@@ -64,14 +61,14 @@ impl Server {
             meta: PacketMeta::default(),
         };
 
-        Ok(Server {
+        Server {
             handle,
             meta,
             mac_addr: mac_addr.0,
             bus_number,
             data_rate,
             last_heartbeat: now,
-        })
+        }
     }
 
     /// Get the current bus number.
