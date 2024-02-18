@@ -6,6 +6,7 @@ edition = "2021"
 [lib]
 
 [dependencies]
+bitfield = "0.14.0"
 bitflags = "2.4.2"
 defmt = { version = "0.3.6", optional = true }
 smoltcp = { version = "0.11.0", default-features = false, features = [
