@@ -2,6 +2,7 @@
 
 #![no_std]
 
+use embedded_can::Frame;
 use smoltcp::{time::Duration, wire::IpAddress};
 
 #[cfg(feature = "client")]
@@ -31,6 +32,22 @@ bitflags::bitflags! {
         const Settings = 1 << 6;
         const Remote = 1 << 1;
         const Extended = 1 << 0;
+    }
+}
+
+impl Flags {
+    fn from_frame(frame: &impl Frame) -> Self {
+        let mut flags = Flags::empty();
+
+        if frame.is_extended() {
+            flags.insert(Flags::Extended)
+        }
+
+        if frame.is_remote_frame() {
+            flags.insert(Flags::Remote)
+        }
+
+        flags
     }
 }
 
