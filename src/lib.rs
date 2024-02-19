@@ -6,6 +6,7 @@ use smoltcp::{time::Duration, wire::IpAddress};
 
 #[cfg(feature = "client")]
 pub mod client;
+pub(crate) mod datagram;
 #[cfg(feature = "server")]
 pub mod server;
 

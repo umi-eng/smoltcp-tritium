@@ -1,9 +1,10 @@
 //! UDP server
 
 use crate::{
-    BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT, PROTO_VER,
+    datagram::Datagram, BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT,
+    PROTO_VER,
 };
-use embedded_can::{Frame, Id};
+use embedded_can::Frame;
 use smoltcp::{
     iface::{SocketHandle, SocketSet},
     phy::PacketMeta,
@@ -11,20 +12,6 @@ use smoltcp::{
     time::Instant,
     wire::{EthernetAddress, IpEndpoint},
 };
-
-bitfield::bitfield! {
-    struct Packet(MSB0 [u8]);
-    impl Debug;
-    pub u64, version, set_version: 59, 8;
-    pub u8, bus_number, set_bus_number: 63, 60;
-    pub u64, client_identifier, set_client_identifier: 127, 72;
-    pub u32, can_identifier, set_can_identifier: 159, 128;
-    pub u8, flags, set_flags: 167, 160;
-    pub u8, can_length, set_can_length: 175, 168;
-    pub u64, can_data, set_can_data: 239, 176;
-}
-
-const PACKET_LEN: usize = 30;
 
 /// Server instance.
 pub struct Server {
@@ -128,15 +115,15 @@ impl Server {
         data[0..2].copy_from_slice(&self.data_rate.to_be_bytes());
         data[2..8].copy_from_slice(&self.mac_addr);
 
-        let mut packet = Packet([0; PACKET_LEN]);
+        let mut packet = Datagram::new();
         // metadata
         packet.set_version(PROTO_VER);
         packet.set_bus_number(self.bus_number.0);
         packet.set_client_identifier(u64::from_be_bytes([0u8; 8]));
         packet.set_flags(flags.bits());
         // frame
-        packet.set_can_identifier(0);
-        packet.set_can_length(8);
+        packet.set_can_id(0);
+        packet.set_can_length(data.len() as u8);
         packet.set_can_data(u64::from_be_bytes(data));
 
         socket.send_slice(&packet.0, self.meta)
@@ -158,37 +145,11 @@ impl Server {
         socket: &mut Socket,
         frame: &impl Frame,
     ) -> Result<(), SendError> {
-        if frame.dlc() > 8 {
-            // we only support standard frames of up to 8 bytes in length.
-            return Ok(()); // todo: error
-        }
+        let mut datagram = Datagram::from_frame(frame).unwrap();
+        datagram.set_version(PROTO_VER);
+        datagram.set_bus_number(self.bus_number.0);
+        datagram.set_client_identifier(u64::from_be_bytes([0u8; 8]));
 
-        let mut flags = Flags::empty();
-
-        if frame.is_extended() {
-            flags.insert(Flags::Extended);
-        }
-
-        if frame.is_remote_frame() {
-            flags.insert(Flags::Remote);
-        }
-
-        let id = match frame.id() {
-            Id::Standard(id) => id.as_raw() as u32,
-            Id::Extended(id) => id.as_raw(),
-        };
-
-        let mut packet = Packet([0; PACKET_LEN]);
-        // metadata
-        packet.set_version(PROTO_VER);
-        packet.set_bus_number(self.bus_number.0);
-        packet.set_client_identifier(u64::from_be_bytes([0u8; 8]));
-        packet.set_flags(flags.bits());
-        // can frame
-        packet.set_can_identifier(id);
-        packet.set_can_length(frame.dlc() as u8);
-        packet.set_can_data(0);
-
-        socket.send_slice(&packet.0, self.meta)
+        socket.send_slice(&datagram.0, self.meta)
     }
 }
