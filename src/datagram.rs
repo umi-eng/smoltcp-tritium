@@ -84,7 +84,7 @@ impl Frame for Datagram<[u8; DATAGRAM_LEN]> {
             Id::Extended(id) => (Flags::Extended, id.as_raw()),
         };
 
-        flags.insert(Flags::Remote);
+        flags |= Flags::Remote;
 
         let mut datagram = Datagram::new();
         datagram.set_can_id(id);

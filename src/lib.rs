@@ -40,11 +40,11 @@ impl Flags {
         let mut flags = Flags::empty();
 
         if frame.is_extended() {
-            flags.insert(Flags::Extended)
+            flags |= Flags::Extended
         }
 
         if frame.is_remote_frame() {
-            flags.insert(Flags::Remote)
+            flags |= Flags::Remote
         }
 
         flags
