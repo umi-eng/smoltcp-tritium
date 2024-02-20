@@ -36,6 +36,7 @@ bitflags::bitflags! {
 }
 
 impl Flags {
+    /// Set flags from [`Frame`]
     fn from_frame(frame: &impl Frame) -> Self {
         let mut flags = Flags::empty();
 
