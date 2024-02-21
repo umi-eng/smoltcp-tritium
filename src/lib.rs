@@ -5,11 +5,8 @@
 use embedded_can::Frame;
 use smoltcp::{time::Duration, wire::IpAddress};
 
-#[cfg(feature = "client")]
-pub mod client;
 pub(crate) mod datagram;
-#[cfg(feature = "server")]
-pub mod server;
+pub mod udp;
 
 /// IANA port.
 pub const PORT: u16 = 4876;

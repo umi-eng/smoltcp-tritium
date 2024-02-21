@@ -18,11 +18,7 @@ smoltcp = { version = "0.10.0", default-features = false, features = [
 ] }
 
 [features]
-default = ["server", "client"]
-
-client = ["client-tcp", "client-udp"]
-client-tcp = []
-client-udp = []
+default = ["server"]
 
 server = ["server-tcp", "server-udp"]
 server-tcp = []

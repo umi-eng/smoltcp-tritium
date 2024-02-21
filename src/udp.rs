@@ -1,4 +1,4 @@
-//! UDP server
+//! UDP protocol
 
 use crate::{
     datagram::Datagram, BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT,
@@ -14,6 +14,7 @@ use smoltcp::{
 };
 
 /// Server instance.
+#[cfg(feature = "server-udp")]
 pub struct Server {
     // configuration
     handle: SocketHandle,
@@ -26,6 +27,7 @@ pub struct Server {
     last_heartbeat: Instant,
 }
 
+#[cfg(feature = "server-udp")]
 impl Server {
     /// Creates a new [`Server`] instance.
     pub fn new<'a>(
