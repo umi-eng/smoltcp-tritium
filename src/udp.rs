@@ -2,8 +2,7 @@
 
 use crate::{
     dgram::{Frame, Header, Packet},
-    heartbeat, BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT,
-    PROTO_VER,
+    heartbeat, BusNumber, BCAST_ADDR, HEARTBEAT_DURATION, PORT, PROTO_VER,
 };
 use embedded_can::Frame as CanFrame;
 use smoltcp::{
