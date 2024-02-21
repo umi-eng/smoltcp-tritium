@@ -1,10 +1,10 @@
 //! UDP protocol
 
 use crate::{
-    dgram::Datagram, BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT,
-    PROTO_VER,
+    dgram::{Frame, Header, Packet},
+    BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT, PROTO_VER,
 };
-use embedded_can::Frame;
+use embedded_can::Frame as CanFrame;
 use smoltcp::{
     iface::{SocketHandle, SocketSet},
     phy::PacketMeta,
@@ -117,25 +117,32 @@ impl Server {
         data[0..2].copy_from_slice(&self.data_rate.to_be_bytes());
         data[2..8].copy_from_slice(&self.mac_addr);
 
-        let mut packet = Datagram::new();
-        // metadata
-        packet.set_version(PROTO_VER);
-        packet.set_bus_number(self.bus_number.0);
-        packet.set_client_identifier(u64::from_be_bytes([0u8; 8]));
-        packet.set_flags(flags.bits());
-        // frame
-        packet.set_can_id(0);
-        packet.set_can_length(data.len() as u8);
-        packet.set_can_data(u64::from_be_bytes(data));
+        let mut packet = Packet {
+            header: Header::new(),
+            frame: Frame::new(),
+        };
 
-        socket.send_slice(&packet.0, self.meta)
+        // metadata
+        packet.header.set_version(PROTO_VER);
+        packet.header.set_bus_number(self.bus_number.0);
+        packet
+            .header
+            .set_client_identifier(u64::from_be_bytes([0u8; 8]));
+
+        // frame
+        packet.frame.set_flags(flags.bits());
+        packet.frame.set_id(0);
+        packet.frame.set_dlc(data.len() as u8);
+        packet.frame.set_data(u64::from_be_bytes(data));
+
+        socket.send_slice(packet.as_bytes(), self.meta)
     }
 
     /// Broadcast a CAN frame.
     pub fn send_frame(
         &mut self,
         sockets: &mut SocketSet,
-        frame: &impl Frame,
+        frame: &impl CanFrame,
     ) -> Result<(), SendError> {
         let socket = sockets.get_mut::<Socket>(self.handle);
 
@@ -145,13 +152,18 @@ impl Server {
     pub fn write_frame(
         &self,
         socket: &mut Socket,
-        frame: &impl Frame,
+        frame: &impl CanFrame,
     ) -> Result<(), SendError> {
-        let mut datagram = Datagram::from_frame(frame).unwrap();
-        datagram.set_version(PROTO_VER);
-        datagram.set_bus_number(self.bus_number.0);
-        datagram.set_client_identifier(u64::from_be_bytes([0u8; 8]));
+        let mut packet = Packet {
+            header: Header::new(),
+            frame: Frame::from_frame(frame).unwrap(),
+        };
+        packet.header.set_version(PROTO_VER);
+        packet.header.set_bus_number(self.bus_number.0);
+        packet
+            .header
+            .set_client_identifier(u64::from_be_bytes([0u8; 8]));
 
-        socket.send_slice(&datagram.0, self.meta)
+        socket.send_slice(packet.as_bytes(), self.meta)
     }
 }

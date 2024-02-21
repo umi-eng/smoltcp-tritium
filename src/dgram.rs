@@ -1,57 +1,25 @@
 use crate::Flags;
-use embedded_can::{ExtendedId, Frame, Id, StandardId};
+use embedded_can::{ExtendedId, Frame as CanFrame, Id, StandardId};
 
-/// Datagram length.
-pub const DGRAM_LEN: usize = 30;
+/// Datagram header length.
+pub const HEADER_LEN: usize = 16;
 
 bitfield::bitfield! {
-    /// Datagram used for UDP send/receive and TCP receive.
-    pub struct Datagram(MSB0 [u8]);
+    /// Datagram header, used when receiving UDP data and sending TCP data.
+    pub struct Header(MSB0 [u8]);
     impl Debug;
     pub u64, version, set_version: 59, 8;
     pub u8, bus_number, set_bus_number: 63, 60;
     pub u64, client_identifier, set_client_identifier: 127, 72;
-    pub u32, can_id, set_can_id: 159, 128;
-    pub u8, flags, set_flags: 167, 160;
-    pub u8, can_length, set_can_length: 175, 168;
-    pub u64, can_data, set_can_data: 239, 176;
 }
 
-impl Datagram<[u8; DGRAM_LEN]> {
+impl Header<[u8; HEADER_LEN]> {
     pub fn new() -> Self {
-        Datagram([0; DGRAM_LEN])
-    }
-
-    pub fn from_frame(frame: &impl Frame) -> Result<Self, ()> {
-        if frame.dlc() > 8 {
-            // we only support standard frames of up to 8 bytes in length.
-            return Err(()); // todo: descriptive error.
-        }
-
-        let mut data: u64 = 0;
-
-        for (n, &byte) in frame.data().iter().enumerate() {
-            if n < frame.dlc() as usize {
-                data |= (byte as u64) << (n * 8);
-            } else {
-                break;
-            }
-        }
-
-        let mut dg = Datagram::new();
-        dg.set_flags(Flags::from_frame(frame).bits());
-        dg.set_can_id(match frame.id() {
-            Id::Standard(id) => id.as_raw() as u32,
-            Id::Extended(id) => id.as_raw(),
-        });
-        dg.set_can_length(frame.dlc() as u8);
-        dg.set_can_data(data);
-
-        Ok(dg)
+        Header([0; HEADER_LEN])
     }
 }
 
-impl Frame for Datagram<[u8; DGRAM_LEN]> {
+impl CanFrame for Frame<[u8; FRAME_LEN]> {
     fn new(id: impl Into<Id>, data: &[u8]) -> Option<Self> {
         if data.len() > 8 {
             return None;
@@ -65,11 +33,11 @@ impl Frame for Datagram<[u8; DGRAM_LEN]> {
         let mut can_data = [0u8; 8];
         can_data[..data.len()].copy_from_slice(data);
 
-        let mut datagram = Datagram::new();
-        datagram.set_can_id(id);
+        let mut datagram = Frame::new();
+        datagram.set_id(id);
         datagram.set_flags(flags.bits());
-        datagram.set_can_length(data.len() as u8);
-        datagram.set_can_data(u64::from_be_bytes(can_data));
+        datagram.set_dlc(data.len() as u8);
+        datagram.set_data(u64::from_be_bytes(can_data));
 
         Some(datagram)
     }
@@ -86,11 +54,11 @@ impl Frame for Datagram<[u8; DGRAM_LEN]> {
 
         flags |= Flags::Remote;
 
-        let mut datagram = Datagram::new();
-        datagram.set_can_id(id);
+        let mut datagram = Frame::new();
+        datagram.set_id(id);
         datagram.set_flags(flags.bits());
-        datagram.set_can_length(dlc as u8);
-        datagram.set_can_data(0);
+        datagram.set_dlc(dlc as u8);
+        datagram.set_data(0);
 
         Some(datagram)
     }
@@ -109,13 +77,13 @@ impl Frame for Datagram<[u8; DGRAM_LEN]> {
 
     fn id(&self) -> Id {
         if self.is_extended() {
-            Id::Extended(ExtendedId::new(self.can_id()).unwrap())
+            Id::Extended(ExtendedId::new(self.id()).unwrap())
         } else {
-            Id::Standard(StandardId::new(self.can_id() as u16).unwrap())
+            Id::Standard(StandardId::new(self.id() as u16).unwrap())
         }
     }
     fn dlc(&self) -> usize {
-        self.can_length() as usize
+        self.dlc() as usize
     }
 
     fn data(&self) -> &[u8] {
@@ -124,35 +92,113 @@ impl Frame for Datagram<[u8; DGRAM_LEN]> {
     }
 }
 
-pub const FRAME_DGRAM_LEN: usize = 14;
+pub const FRAME_LEN: usize = 14;
 
 bitfield::bitfield! {
     /// Frame datagram only including the CAN frame section.
     ///
     /// Used for incomming frames on a TCP connection stream.
-    pub struct FrameDatagram(MSB0 [u8]);
+    pub struct Frame(MSB0 [u8]);
     impl Debug;
-    pub u32, can_identifier, set_can_identifier: 31, 0;
+    pub u32, id, set_id: 31, 0;
     pub u8, flags, set_flags: 39, 32;
-    pub u8, can_length, set_can_length: 47, 40;
-    pub u64, can_data, set_can_data: 111, 48;
+    pub u8, dlc, set_dlc: 47, 40;
+    pub u64, data, set_data: 111, 48;
 }
 
-impl FrameDatagram<[u8; FRAME_DGRAM_LEN]> {
+impl Frame<[u8; FRAME_LEN]> {
     pub fn new() -> Self {
-        FrameDatagram([0; FRAME_DGRAM_LEN])
+        Frame([0; FRAME_LEN])
+    }
+
+    pub fn from_frame(frame: &impl CanFrame) -> Result<Self, ()> {
+        if frame.dlc() > 8 {
+            // we only support standard frames of up to 8 bytes in length.
+            return Err(()); // todo: descriptive error.
+        }
+
+        let mut data: u64 = 0;
+
+        for (n, &byte) in frame.data().iter().enumerate() {
+            if n < frame.dlc() as usize {
+                data |= (byte as u64) << (n * 8);
+            } else {
+                break;
+            }
+        }
+
+        let mut dg = Frame::new();
+        dg.set_flags(Flags::from_frame(frame).bits());
+        dg.set_id(match frame.id() {
+            Id::Standard(id) => id.as_raw() as u32,
+            Id::Extended(id) => id.as_raw(),
+        });
+        dg.set_dlc(frame.dlc() as u8);
+        dg.set_data(data);
+
+        Ok(dg)
     }
 }
 
-pub const FILTER_DGRAM_LEN: usize = 24;
+/// Complete datagram packet.
+///
+/// Used when receiving UDP frames and sending frames for both UDP and TCP.
+#[repr(C)]
+pub struct Packet {
+    pub header: Header<[u8; HEADER_LEN]>,
+    pub frame: Frame<[u8; FRAME_LEN]>,
+}
+
+impl Packet {
+    pub fn as_bytes(&self) -> &[u8] {
+        // is safe because we use size_of::<Packet>
+        unsafe {
+            ::core::slice::from_raw_parts(
+                self as *const _ as *const u8,
+                ::core::mem::size_of::<Packet>(),
+            )
+        }
+    }
+}
+
+/// Filter setting datagram length.
+pub const FILTER_LEN: usize = 24;
 
 bitfield::bitfield! {
     /// Datagram use for filt
-    pub struct FilterDatagram(MSB0 [u8]);
+    pub struct Filter(MSB0 [u8]);
     impl Debug;
     pub u32, fwd_identifier, set_fwd_identifier: 31, 0;
     pub u32, fwd_range, set_fwd_range: 63, 32;
     pub u8, bus_number, set_bus_bumber: 71, 64;
     pub u64, version_number, set_version_number: 123, 72;
     pub u64, client_identifier, set_client_identifier: 187, 132;
+}
+
+impl Filter<[u8; FILTER_LEN]> {
+    pub fn new() -> Self {
+        Filter([0; FILTER_LEN])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use core::mem::{size_of, size_of_val};
+
+    #[test]
+    fn header_type_length() {
+        assert_eq!(size_of_val(&Header::new()), 16)
+    }
+
+    #[test]
+    fn frame_type_length() {
+        assert_eq!(size_of_val(&Frame::new()), 14)
+    }
+
+    #[test]
+    fn packet_type_length() {
+        assert_eq!(size_of::<Packet>(), 30)
+    }
 }
