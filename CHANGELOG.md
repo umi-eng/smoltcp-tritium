@@ -11,3 +11,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Protoocl datagram formats.
 - UDP protocol server.
+- Bus number newtype.
+- Datagram flags bitflags.
