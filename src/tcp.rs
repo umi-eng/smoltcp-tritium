@@ -1,4 +1,4 @@
-//! TCP protocol
+//! TCP protocol.
 
 use crate::{heartbeat, BusNumber, HEARTBEAT_DURATION, PORT};
 use smoltcp::{

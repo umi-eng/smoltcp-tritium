@@ -1,4 +1,4 @@
-//! UDP protocol
+//! UDP protocol.
 
 use crate::{
     dgram::{Frame, Header, Packet},
