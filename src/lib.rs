@@ -1,4 +1,18 @@
-//! Tritium CAN network protocol
+//! smoltcp drivers for the Tritium CAN protocol.
+//!
+//! This crate provides server and client implementations for the protocol used
+//! by the Tritium CAN-Eth adapter.
+//!
+//! # Limitations
+//!
+//! The server and client do no buffer frames outside of the transmit and
+//! receiver buffers that the underlying socket has access to.
+//!
+//! # Cargo Features
+//! | Feature | Description |
+//! | --- | --- |
+//! | `server` | UDP/TCP server implementation. |
+//! | `client` | UDP/TCP client implementation. |
 
 #![no_std]
 
