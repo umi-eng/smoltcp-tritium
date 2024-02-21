@@ -2,7 +2,7 @@ use crate::Flags;
 use embedded_can::{ExtendedId, Frame, Id, StandardId};
 
 /// Datagram length.
-pub const DATAGRAM_LEN: usize = 30;
+pub const DGRAM_LEN: usize = 30;
 
 bitfield::bitfield! {
     /// Datagram used for UDP send/receive and TCP receive.
@@ -17,9 +17,9 @@ bitfield::bitfield! {
     pub u64, can_data, set_can_data: 239, 176;
 }
 
-impl Datagram<[u8; DATAGRAM_LEN]> {
+impl Datagram<[u8; DGRAM_LEN]> {
     pub fn new() -> Self {
-        Datagram([0; DATAGRAM_LEN])
+        Datagram([0; DGRAM_LEN])
     }
 
     pub fn from_frame(frame: &impl Frame) -> Result<Self, ()> {
@@ -51,7 +51,7 @@ impl Datagram<[u8; DATAGRAM_LEN]> {
     }
 }
 
-impl Frame for Datagram<[u8; DATAGRAM_LEN]> {
+impl Frame for Datagram<[u8; DGRAM_LEN]> {
     fn new(id: impl Into<Id>, data: &[u8]) -> Option<Self> {
         if data.len() > 8 {
             return None;
@@ -124,7 +124,7 @@ impl Frame for Datagram<[u8; DATAGRAM_LEN]> {
     }
 }
 
-pub const FRAME_DATAGRAM_LEN: usize = 14;
+pub const FRAME_DGRAM_LEN: usize = 14;
 
 bitfield::bitfield! {
     /// Frame datagram only including the CAN frame section.
@@ -138,13 +138,13 @@ bitfield::bitfield! {
     pub u64, can_data, set_can_data: 111, 48;
 }
 
-impl FrameDatagram<[u8; FRAME_DATAGRAM_LEN]> {
+impl FrameDatagram<[u8; FRAME_DGRAM_LEN]> {
     pub fn new() -> Self {
-        FrameDatagram([0; FRAME_DATAGRAM_LEN])
+        FrameDatagram([0; FRAME_DGRAM_LEN])
     }
 }
 
-pub const FILTER_PACKET_LEN: usize = 24;
+pub const FILTER_DGRAM_LEN: usize = 24;
 
 bitfield::bitfield! {
     /// Datagram use for filt

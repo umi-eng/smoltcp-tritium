@@ -1,7 +1,7 @@
 //! UDP protocol
 
 use crate::{
-    datagram::Datagram, BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT,
+    dgram::Datagram, BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT,
     PROTO_VER,
 };
 use embedded_can::Frame;
