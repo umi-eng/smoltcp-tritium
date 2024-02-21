@@ -6,6 +6,7 @@ use embedded_can::Frame;
 use smoltcp::{time::Duration, wire::IpAddress};
 
 pub(crate) mod dgram;
+pub(crate) mod heartbeat;
 pub mod udp;
 
 /// IANA port.

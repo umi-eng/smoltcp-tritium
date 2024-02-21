@@ -2,7 +2,8 @@
 
 use crate::{
     dgram::{Frame, Header, Packet},
-    BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT, PROTO_VER,
+    heartbeat, BusNumber, Flags, BCAST_ADDR, HEARTBEAT_DURATION, PORT,
+    PROTO_VER,
 };
 use embedded_can::Frame as CanFrame;
 use smoltcp::{
@@ -110,30 +111,8 @@ impl Server {
     }
 
     fn write_heartbeat(&self, socket: &mut Socket) -> Result<(), SendError> {
-        let flags = Flags::Heartbeat;
-
-        let mut data = [0u8; 8];
-        // bitrate
-        data[0..2].copy_from_slice(&self.data_rate.to_be_bytes());
-        data[2..8].copy_from_slice(&self.mac_addr);
-
-        let mut packet = Packet {
-            header: Header::new(),
-            frame: Frame::new(),
-        };
-
-        // metadata
-        packet.header.set_version(PROTO_VER);
-        packet.header.set_bus_number(self.bus_number.0);
-        packet
-            .header
-            .set_client_identifier(u64::from_be_bytes([0u8; 8]));
-
-        // frame
-        packet.frame.set_flags(flags.bits());
-        packet.frame.set_id(0);
-        packet.frame.set_dlc(data.len() as u8);
-        packet.frame.set_data(u64::from_be_bytes(data));
+        let packet =
+            heartbeat::build(&self.mac_addr, &self.bus_number, &self.data_rate);
 
         socket.send_slice(packet.as_bytes(), self.meta)
     }
