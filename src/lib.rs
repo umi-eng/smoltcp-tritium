@@ -7,6 +7,7 @@ use smoltcp::{time::Duration, wire::IpAddress};
 
 pub(crate) mod dgram;
 pub(crate) mod heartbeat;
+pub mod tcp;
 pub mod udp;
 
 /// IANA port.
