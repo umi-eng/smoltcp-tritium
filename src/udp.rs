@@ -124,14 +124,6 @@ impl Server {
     ) -> Result<(), SendError> {
         let socket = sockets.get_mut::<Socket>(self.handle);
 
-        self.write_frame(socket, frame)
-    }
-
-    pub fn write_frame(
-        &self,
-        socket: &mut Socket,
-        frame: &impl CanFrame,
-    ) -> Result<(), SendError> {
         let mut packet = Packet {
             header: Header::new(),
             frame: Frame::from_frame(frame).unwrap(),
