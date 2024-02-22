@@ -1,6 +1,9 @@
 //! TCP protocol.
 
-use crate::{heartbeat, BusNumber, HEARTBEAT_DURATION, PORT};
+use crate::{
+    dgram::{Frame, Header, Packet},
+    heartbeat, BusNumber, HEARTBEAT_DURATION, PORT, PROTO_VER,
+};
 use smoltcp::{
     iface::{SocketHandle, SocketSet},
     socket::tcp::{SendError, Socket, SocketBuffer},
@@ -84,6 +87,27 @@ impl Server {
     fn write_heartbeat(&self, socket: &mut Socket) -> Result<(), SendError> {
         let packet =
             heartbeat::build(&self.mac_addr, &self.bus_number, &self.data_rate);
+
+        socket.send_slice(packet.as_bytes()).map(|_| ())
+    }
+
+    /// Send can frame.
+    pub fn send_frame(
+        &mut self,
+        sockets: &mut SocketSet,
+        frame: &impl embedded_can::Frame,
+    ) -> Result<(), SendError> {
+        let socket = sockets.get_mut::<Socket>(self.handle);
+
+        let mut packet = Packet {
+            header: Header::new(),
+            frame: Frame::from_frame(frame).unwrap(),
+        };
+        packet.header.set_version(PROTO_VER);
+        packet.header.set_bus_number(self.bus_number.0);
+        packet
+            .header
+            .set_client_identifier(u64::from_be_bytes([0u8; 8]));
 
         socket.send_slice(packet.as_bytes()).map(|_| ())
     }
