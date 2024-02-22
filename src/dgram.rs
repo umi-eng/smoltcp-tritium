@@ -6,20 +6,22 @@ pub const HEADER_LEN: usize = 16;
 
 bitfield::bitfield! {
     /// Datagram header, used when receiving UDP data and sending TCP data.
-    pub struct Header(MSB0 [u8]);
+    pub struct HeaderBitfield(MSB0 [u8]);
     impl Debug;
     pub u64, version, set_version: 59, 8;
     pub u8, bus_number, set_bus_number: 63, 60;
     pub u64, client_identifier, set_client_identifier: 127, 72;
 }
 
-impl Header<[u8; HEADER_LEN]> {
+pub type Header = HeaderBitfield<[u8; HEADER_LEN]>;
+
+impl Header {
     pub fn new() -> Self {
-        Header([0; HEADER_LEN])
+        HeaderBitfield([0; HEADER_LEN])
     }
 }
 
-impl CanFrame for Frame<[u8; FRAME_LEN]> {
+impl CanFrame for Frame {
     fn new(id: impl Into<Id>, data: &[u8]) -> Option<Self> {
         if data.len() > 8 {
             return None;
@@ -98,7 +100,7 @@ bitfield::bitfield! {
     /// Frame datagram only including the CAN frame section.
     ///
     /// Used for incomming frames on a TCP connection stream.
-    pub struct Frame(MSB0 [u8]);
+    pub struct FrameBitfield(MSB0 [u8]);
     impl Debug;
     pub u32, id, set_id: 31, 0;
     pub u8, flags, set_flags: 39, 32;
@@ -106,9 +108,11 @@ bitfield::bitfield! {
     pub u64, data, set_data: 111, 48;
 }
 
-impl Frame<[u8; FRAME_LEN]> {
+pub type Frame = FrameBitfield<[u8; FRAME_LEN]>;
+
+impl Frame {
     pub fn new() -> Self {
-        Frame([0; FRAME_LEN])
+        FrameBitfield([0; FRAME_LEN])
     }
 
     pub fn from_frame(frame: &impl CanFrame) -> Result<Self, ()> {
@@ -145,8 +149,8 @@ impl Frame<[u8; FRAME_LEN]> {
 /// Used when receiving UDP frames and sending frames for both UDP and TCP.
 #[repr(C)]
 pub struct Packet {
-    pub header: Header<[u8; HEADER_LEN]>,
-    pub frame: Frame<[u8; FRAME_LEN]>,
+    pub header: Header,
+    pub frame: Frame,
 }
 
 impl Packet {
@@ -166,7 +170,7 @@ pub const FILTER_LEN: usize = 24;
 
 bitfield::bitfield! {
     /// Datagram use for filt
-    pub struct Filter(MSB0 [u8]);
+    pub struct FilterBitfield(MSB0 [u8]);
     impl Debug;
     pub u32, fwd_identifier, set_fwd_identifier: 31, 0;
     pub u32, fwd_range, set_fwd_range: 63, 32;
@@ -175,9 +179,11 @@ bitfield::bitfield! {
     pub u64, client_identifier, set_client_identifier: 187, 132;
 }
 
-impl Filter<[u8; FILTER_LEN]> {
+pub type Filter = FilterBitfield<[u8; FILTER_LEN]>;
+
+impl Filter {
     pub fn new() -> Self {
-        Filter([0; FILTER_LEN])
+        FilterBitfield([0; FILTER_LEN])
     }
 }
 
