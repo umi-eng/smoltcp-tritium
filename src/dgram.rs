@@ -123,7 +123,7 @@ impl Frame {
 
         let mut data: u64 = 0;
 
-        for (n, &byte) in frame.data().iter().enumerate() {
+        for (n, &byte) in frame.data().iter().rev().enumerate() {
             if n < frame.dlc() as usize {
                 data |= (byte as u64) << (n * 8);
             } else {
