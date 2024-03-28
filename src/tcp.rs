@@ -6,7 +6,7 @@ use crate::{
 };
 use smoltcp::{
     iface::{SocketHandle, SocketSet},
-    socket::tcp::{SendError, Socket, SocketBuffer},
+    socket::tcp::{SendError, Socket, SocketBuffer, State},
     time::Instant,
     wire::EthernetAddress,
 };
@@ -56,6 +56,12 @@ impl Server {
                     defmt::error!("Failed to bind to {}: {}", PORT, _err);
                 }
             }
+        }
+
+        // if client closes, close on our end as well
+        if socket.state() == State::CloseWait {
+            socket.close();
+            return;
         }
 
         if now - self.last_heartbeat > HEARTBEAT_DURATION {
