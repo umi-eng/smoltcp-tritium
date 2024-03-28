@@ -14,7 +14,6 @@ use smoltcp::{
 };
 
 /// Server instance.
-#[cfg(feature = "server-udp")]
 pub struct Server {
     // configuration
     handle: SocketHandle,
@@ -26,8 +25,6 @@ pub struct Server {
     // state
     last_heartbeat: Instant,
 }
-
-#[cfg(feature = "server-udp")]
 impl Server {
     /// Creates a new [`Server`] instance.
     pub fn new<'a>(

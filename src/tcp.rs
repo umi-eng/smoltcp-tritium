@@ -11,7 +11,6 @@ use smoltcp::{
     wire::EthernetAddress,
 };
 
-#[cfg(feature = "server-tcp")]
 pub struct Server {
     // configuration
     handle: SocketHandle,
@@ -23,7 +22,6 @@ pub struct Server {
     last_heartbeat: Instant,
 }
 
-#[cfg(feature = "server-tcp")]
 impl Server {
     pub fn new<'a>(
         sockets: &mut SocketSet<'a>,

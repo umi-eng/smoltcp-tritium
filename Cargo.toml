@@ -18,10 +18,4 @@ smoltcp = { version = "0.10.0", default-features = false, features = [
 ] }
 
 [features]
-default = ["server"]
-
-server = ["server-tcp", "server-udp"]
-server-tcp = []
-server-udp = []
-
 defmt-03 = ["dep:defmt", "smoltcp/defmt"]
