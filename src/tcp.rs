@@ -51,12 +51,9 @@ impl Server {
 
         if !socket.is_open() {
             if !socket.is_listening() {
-                match socket.listen(PORT) {
-                    Ok(_) => {}
-                    Err(_err) => {
-                        #[cfg(feature = "defmt-03")]
-                        defmt::error!("Failed to bind to {}: {}", PORT, _err);
-                    }
+                if let Err(_err) = socket.listen(PORT) {
+                    #[cfg(feature = "defmt-03")]
+                    defmt::error!("Failed to bind to {}: {}", PORT, _err);
                 }
             }
         }
