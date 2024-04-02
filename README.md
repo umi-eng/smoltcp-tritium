@@ -1,6 +1,6 @@
 # Tritium CAN network protocol
 
-Implemented in [`smoltcp`](https://github.com/smoltcp-rs/smoltcp) for embedded  and `no_std` environments.
+Implemented in [`smoltcp`](https://github.com/smoltcp-rs/smoltcp) for embedded and `no_std` environments.
 
 ## Usage
 
