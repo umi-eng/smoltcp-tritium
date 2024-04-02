@@ -6,11 +6,11 @@ edition = "2021"
 [lib]
 
 [dependencies]
-bitfield = "0.14.0"
-bitflags = "2.4.2"
-defmt = { version = "0.3.6", optional = true }
-embedded-can = "0.4.1"
-smoltcp = { version = "0.10.0", default-features = false, features = [
+bitfield = "0.14"
+bitflags = "2.4"
+defmt = { version = "0.3", optional = true }
+embedded-can = "0.4"
+smoltcp = { version = "0.11", default-features = false, features = [
     "socket-tcp",
     "socket-udp",
     "proto-ipv4",
