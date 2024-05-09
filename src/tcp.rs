@@ -99,7 +99,7 @@ impl Server {
         let packet =
             heartbeat::build(&self.mac_addr, &self.bus_number, &self.data_rate);
 
-        socket.send_slice(packet.as_bytes()).map(|_| ())
+        socket.send_slice(&packet.frame.0).map(|_| ())
     }
 
     /// Send can frame.
@@ -110,16 +110,10 @@ impl Server {
     ) -> Result<(), SendError> {
         let socket = sockets.get_mut::<Socket>(self.handle);
 
-        let mut packet = Packet {
-            header: Header::new(),
-            frame: Frame::from_frame(frame).unwrap(),
-        };
-        packet.header.set_version(PROTO_VER);
-        packet.header.set_bus_number(self.bus_number.0);
-        packet
-            .header
-            .set_client_identifier(u64::from_be_bytes([0u8; 8]));
-
-        socket.send_slice(packet.as_bytes()).map(|_| ())
+        if let Ok(frame) = Frame::from_frame(frame) {
+            socket.send_slice(&frame.0).map(|_| ())
+        } else {
+            Ok(())
+        }
     }
 }
