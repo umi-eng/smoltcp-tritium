@@ -62,12 +62,14 @@ impl Server {
             return;
         }
 
-        if now - self.last_heartbeat > HEARTBEAT_DURATION {
-            match self.write_heartbeat(socket) {
-                Ok(_) => self.last_heartbeat = now,
-                Err(_err) => {
-                    #[cfg(feature = "defmt-03")]
-                    defmt::error!("Failed to send heartbeat: {}", _err);
+        if socket.can_send() {
+            if now - self.last_heartbeat > HEARTBEAT_DURATION {
+                match self.write_heartbeat(socket) {
+                    Ok(_) => self.last_heartbeat = now,
+                    Err(_err) => {
+                        #[cfg(feature = "defmt-03")]
+                        defmt::error!("Failed to send heartbeat: {}", _err);
+                    }
                 }
             }
         }
