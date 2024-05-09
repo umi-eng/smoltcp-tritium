@@ -102,16 +102,8 @@ impl Server {
     ) -> Result<(), SendError> {
         let socket = sockets.get_mut::<Socket>(self.handle);
 
-        let mut packet = Packet {
-            header: Header::new(),
-            frame: Frame::from_frame(frame).unwrap(),
-        };
-        packet.header.set_version(PROTO_VER);
-        packet.header.set_bus_number(self.bus_number.0);
-        packet
-            .header
-            .set_client_identifier(u64::from_be_bytes([0u8; 8]));
+        let frame = Frame::from_frame(frame).unwrap();
 
-        socket.send_slice(packet.as_bytes()).map(|_| ())
+        socket.send_slice(&frame.0).map(|_| ())
     }
 }
