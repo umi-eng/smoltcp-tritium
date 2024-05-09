@@ -20,6 +20,7 @@ pub struct Server {
 
     // state
     last_heartbeat: Instant,
+    stream_start: bool,
 }
 
 impl Server {
@@ -41,6 +42,7 @@ impl Server {
             last_heartbeat: now,
             bus_number,
             data_rate,
+            stream_start: false,
         }
     }
 
@@ -59,10 +61,16 @@ impl Server {
         // if client closes, close on our end as well
         if socket.state() == State::CloseWait {
             socket.close();
+            self.stream_start = false;
             return;
         }
 
         if socket.can_send() {
+            if !self.stream_start {
+                socket.send_slice(&[0; 30]).unwrap();
+                self.stream_start = true;
+            }
+
             if now - self.last_heartbeat > HEARTBEAT_DURATION {
                 match self.write_heartbeat(socket) {
                     Ok(_) => self.last_heartbeat = now,
