@@ -11,6 +11,7 @@ use smoltcp::{
     wire::EthernetAddress,
 };
 
+#[derive(Debug)]
 pub struct Server {
     // configuration
     handle: SocketHandle,

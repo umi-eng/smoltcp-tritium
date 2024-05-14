@@ -147,6 +147,7 @@ impl Frame {
 /// Complete datagram packet.
 ///
 /// Used when receiving UDP frames and sending frames for both UDP and TCP.
+#[derive(Debug)]
 #[repr(C)]
 pub struct Packet {
     pub header: Header,

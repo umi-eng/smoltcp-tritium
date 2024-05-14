@@ -37,6 +37,7 @@ pub(crate) const PROTO_VER: u64 = 0x5472697469756;
 pub const HEARTBEAT_DURATION: Duration = Duration::from_secs(1);
 
 /// Flags bitfield.
+#[derive(Debug)]
 pub(crate) struct Flags(u8);
 
 bitflags::bitflags! {
@@ -66,7 +67,7 @@ impl Flags {
 }
 
 /// Bus number
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct BusNumber(u8);
 
 impl TryFrom<u8> for BusNumber {

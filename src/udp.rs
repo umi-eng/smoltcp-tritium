@@ -14,6 +14,7 @@ use smoltcp::{
 };
 
 /// Server instance.
+#[derive(Debug)]
 pub struct Server {
     // configuration
     handle: SocketHandle,
@@ -25,6 +26,7 @@ pub struct Server {
     // state
     last_heartbeat: Instant,
 }
+
 impl Server {
     /// Creates a new [`Server`] instance.
     pub fn new<'a>(
