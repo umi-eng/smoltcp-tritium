@@ -1,14 +1,14 @@
 //! TCP protocol.
 
-use crate::{
-    dgram::{Frame, Header, Packet},
-    heartbeat, BusNumber, HEARTBEAT_DURATION, PORT, PROTO_VER,
-};
 use smoltcp::{
     iface::{SocketHandle, SocketSet},
     socket::tcp::{SendError, Socket, SocketBuffer, State},
     time::Instant,
     wire::EthernetAddress,
+};
+use tritiumcan::{
+    datagram::{Frame, Packet},
+    BusNumber, HEARTBEAT_INTERVAL, PORT,
 };
 
 #[derive(Debug)]
@@ -72,7 +72,7 @@ impl Server {
                 self.stream_start = true;
             }
 
-            if now - self.last_heartbeat > HEARTBEAT_DURATION {
+            if now - self.last_heartbeat > HEARTBEAT_INTERVAL.into() {
                 match self.write_heartbeat(socket) {
                     Ok(_) => self.last_heartbeat = now,
                     Err(_err) => {
@@ -97,8 +97,11 @@ impl Server {
     }
 
     fn write_heartbeat(&self, socket: &mut Socket) -> Result<(), SendError> {
-        let packet =
-            heartbeat::build(&self.mac_addr, &self.bus_number, &self.data_rate);
+        let packet = Packet::new_heartbeat(
+            &self.mac_addr,
+            &self.bus_number,
+            &self.data_rate,
+        );
 
         socket.send_slice(&packet.frame.0).map(|_| ())
     }

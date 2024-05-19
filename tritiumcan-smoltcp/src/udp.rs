@@ -1,17 +1,21 @@
 //! UDP protocol.
 
-use crate::{
-    dgram::{Frame, Header, Packet},
-    heartbeat, BusNumber, BCAST_ADDR, HEARTBEAT_DURATION, PORT, PROTO_VER,
-};
+use core::mem::size_of;
+
+use crate::BROADCAST;
 use embedded_can::Frame as CanFrame;
 use smoltcp::{
     iface::{SocketHandle, SocketSet},
     phy::PacketMeta,
-    socket::udp::{PacketBuffer, SendError, Socket, UdpMetadata},
+    socket::udp::{PacketBuffer, RecvError, SendError, Socket, UdpMetadata},
     time::Instant,
     wire::{EthernetAddress, IpEndpoint},
 };
+use tritiumcan::{
+    datagram::{Frame, Header, Packet},
+    BusNumber, HEARTBEAT_INTERVAL, PORT, PROTOCOL_VERSION,
+};
+use zerocopy::{AsBytes, FromZeroes};
 
 /// Server instance.
 #[derive(Debug)]
@@ -43,7 +47,7 @@ impl Server {
 
         let meta = UdpMetadata {
             endpoint: IpEndpoint {
-                addr: BCAST_ADDR,
+                addr: BROADCAST,
                 port: PORT,
             },
             meta: PacketMeta::default(),
@@ -85,7 +89,7 @@ impl Server {
             }
         }
 
-        if now - self.last_heartbeat > HEARTBEAT_DURATION {
+        if now - self.last_heartbeat > HEARTBEAT_INTERVAL.into() {
             match self.write_heartbeat(socket) {
                 Ok(_) => self.last_heartbeat = now,
                 Err(_err) => {
@@ -109,8 +113,11 @@ impl Server {
     }
 
     fn write_heartbeat(&self, socket: &mut Socket) -> Result<(), SendError> {
-        let packet =
-            heartbeat::build(&self.mac_addr, &self.bus_number, &self.data_rate);
+        let packet = Packet::new_heartbeat(
+            &self.mac_addr,
+            &self.bus_number,
+            &self.data_rate,
+        );
 
         socket.send_slice(packet.as_bytes(), self.meta)
     }
@@ -127,12 +134,28 @@ impl Server {
             header: Header::new(),
             frame: Frame::from_frame(frame).unwrap(),
         };
-        packet.header.set_version(PROTO_VER);
-        packet.header.set_bus_number(self.bus_number.0);
+        packet.header.set_version(PROTOCOL_VERSION);
+        packet.header.set_bus_number(self.bus_number.into());
         packet
             .header
             .set_client_identifier(u64::from_be_bytes([0u8; 8]));
 
         socket.send_slice(packet.as_bytes(), self.meta)
+    }
+
+    pub fn recv_frame(
+        &mut self,
+        sockets: &mut SocketSet,
+    ) -> Result<Option<Frame>, RecvError> {
+        let socket = sockets.get_mut::<Socket>(self.handle);
+
+        let mut packet = Packet::new_zeroed();
+        let (len, _meta) = socket.recv_slice(packet.as_bytes_mut())?;
+
+        if len != size_of::<Packet>() {
+            Ok(None)
+        } else {
+            Ok(Some(packet.frame.into()))
+        }
     }
 }

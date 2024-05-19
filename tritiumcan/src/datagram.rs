@@ -1,11 +1,15 @@
-use crate::Flags;
-use embedded_can::{ExtendedId, Frame as CanFrame, Id, StandardId};
+use crate::{BusNumber, Flags, PROTOCOL_VERSION};
+use embedded_can::{ExtendedId, Id, StandardId};
+use zerocopy::{AsBytes, FromBytes, FromZeroes};
 
 /// Datagram header length.
-pub const HEADER_LEN: usize = 16;
+const HEADER_LEN: usize = 16;
 
 bitfield::bitfield! {
     /// Datagram header, used when receiving UDP data and sending TCP data.
+    #[derive(AsBytes, FromBytes, FromZeroes)]
+    #[repr(transparent)]
+    #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
     pub struct HeaderBitfield(MSB0 [u8]);
     impl Debug;
     pub u64, version, set_version: 59, 8;
@@ -21,7 +25,7 @@ impl Header {
     }
 }
 
-impl CanFrame for Frame {
+impl embedded_can::Frame for Frame {
     fn new(id: impl Into<Id>, data: &[u8]) -> Option<Self> {
         if data.len() > 8 {
             return None;
@@ -100,8 +104,14 @@ bitfield::bitfield! {
     /// Frame datagram only including the CAN frame section.
     ///
     /// Used for incomming frames on a TCP connection stream.
+    #[derive(AsBytes, FromBytes, FromZeroes)]
+    #[repr(transparent)]
+    #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
     pub struct FrameBitfield(MSB0 [u8]);
     impl Debug;
+    impl FromZeroes;
+    impl FromBytes;
+    impl AsBytes;
     pub u32, id, set_id: 31, 0;
     pub u8, flags, set_flags: 39, 32;
     pub u8, dlc, set_dlc: 47, 40;
@@ -115,7 +125,7 @@ impl Frame {
         FrameBitfield([0; FRAME_LEN])
     }
 
-    pub fn from_frame(frame: &impl CanFrame) -> Result<Self, ()> {
+    pub fn from_frame(frame: &impl embedded_can::Frame) -> Result<Self, ()> {
         if frame.dlc() > 8 {
             // we only support standard frames of up to 8 bytes in length.
             return Err(()); // todo: descriptive error.
@@ -147,14 +157,48 @@ impl Frame {
 /// Complete datagram packet.
 ///
 /// Used when receiving UDP frames and sending frames for both UDP and TCP.
-#[derive(Debug)]
+#[derive(Debug, FromBytes, AsBytes, FromZeroes)]
 #[repr(C)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct Packet {
     pub header: Header,
     pub frame: Frame,
 }
 
 impl Packet {
+    pub fn new_heartbeat(
+        mac_addr: &[u8; 6],
+        bus_number: &BusNumber,
+        data_rate: &u16,
+    ) -> Self {
+        let flags = Flags::Heartbeat;
+
+        let mut data = [0u8; 8];
+        // bitrate
+        data[0..2].copy_from_slice(&data_rate.to_be_bytes());
+        data[2..8].copy_from_slice(mac_addr);
+
+        let mut packet = Packet {
+            header: Header::new(),
+            frame: Frame::new(),
+        };
+
+        // metadata
+        packet.header.set_version(PROTOCOL_VERSION);
+        packet.header.set_bus_number(bus_number.0);
+        packet
+            .header
+            .set_client_identifier(u64::from_be_bytes([0u8; 8]));
+
+        // frame
+        packet.frame.set_flags(flags.bits());
+        packet.frame.set_id(0);
+        packet.frame.set_dlc(data.len() as u8);
+        packet.frame.set_data(u64::from_be_bytes(data));
+
+        packet
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         // is safe because we use size_of::<Packet>
         unsafe {
@@ -171,6 +215,7 @@ pub const FILTER_LEN: usize = 24;
 
 bitfield::bitfield! {
     /// Datagram use for filt
+    #[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
     pub struct FilterBitfield(MSB0 [u8]);
     impl Debug;
     pub u32, fwd_identifier, set_fwd_identifier: 31, 0;

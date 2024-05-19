@@ -1,0 +1,15 @@
+[package]
+name = "tritiumcan"
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+
+[dependencies]
+bitfield = "0.15.0"
+bitflags = "2.5.0"
+defmt = { version = "0.3.8", optional = true }
+embedded-can = { workspace = true }
+zerocopy = { version = "0.7.34", features = ["derive"] }
+
+[features]
+defmt-03 = ["dep:defmt"]

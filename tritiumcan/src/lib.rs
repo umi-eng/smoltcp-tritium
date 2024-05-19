@@ -1,44 +1,27 @@
-//! smoltcp drivers for the Tritium CAN protocol.
-//!
-//! This crate provides server and client implementations for the protocol used
-//! by the Tritium CAN-Eth adapter.
-//!
-//! # Limitations
-//!
-//! The server and client do no buffer frames outside of the transmit and
-//! receiver buffers that the underlying socket has access to.
-//!
-//! # Cargo Features
-//! | Feature | Description |
-//! | --- | --- |
-//! | `server` | UDP/TCP server implementation. |
-//! | `client` | UDP/TCP client implementation. |
+#![cfg_attr(not(test), no_std)]
 
-#![no_std]
+pub mod datagram;
 
+use core::net::{IpAddr, Ipv4Addr};
+use core::time::Duration;
 use embedded_can::Frame;
-use smoltcp::{time::Duration, wire::IpAddress};
 
-pub(crate) mod dgram;
-pub(crate) mod heartbeat;
-pub mod tcp;
-pub mod udp;
+/// Broadcast address.
+pub const BROADCAST: IpAddr = IpAddr::V4(Ipv4Addr::new(239, 255, 60, 60));
 
 /// IANA port.
 pub const PORT: u16 = 4876;
 
-/// Broadcast address.
-pub const BCAST_ADDR: IpAddress = IpAddress::v4(239, 255, 60, 60);
-
 /// Protocol version identifier.
-pub(crate) const PROTO_VER: u64 = 0x5472697469756;
+pub const PROTOCOL_VERSION: u64 = 0x5472697469756;
 
 /// Heartbeat interval.
-pub const HEARTBEAT_DURATION: Duration = Duration::from_secs(1);
+pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(1);
 
 /// Flags bitfield.
 #[derive(Debug)]
-pub(crate) struct Flags(u8);
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+pub struct Flags(u8);
 
 bitflags::bitflags! {
     impl Flags: u8 {
@@ -51,7 +34,7 @@ bitflags::bitflags! {
 
 impl Flags {
     /// Set flags from [`Frame`]
-    fn from_frame(frame: &impl Frame) -> Self {
+    pub fn from_frame(frame: &impl Frame) -> Self {
         let mut flags = Flags::empty();
 
         if frame.is_extended() {
@@ -68,6 +51,7 @@ impl Flags {
 
 /// Bus number
 #[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct BusNumber(u8);
 
 impl TryFrom<u8> for BusNumber {
@@ -80,6 +64,12 @@ impl TryFrom<u8> for BusNumber {
         } else {
             Ok(BusNumber(value))
         }
+    }
+}
+
+impl From<BusNumber> for u8 {
+    fn from(value: BusNumber) -> Self {
+        value.0
     }
 }
 
