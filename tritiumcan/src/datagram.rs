@@ -237,16 +237,16 @@ impl Filter {
 mod tests {
     use super::*;
 
-    use core::mem::{size_of, size_of_val};
+    use core::mem::size_of;
 
     #[test]
     fn header_type_length() {
-        assert_eq!(size_of_val(&Header::new()), 16)
+        assert_eq!(size_of::<Header>(), 16)
     }
 
     #[test]
     fn frame_type_length() {
-        assert_eq!(size_of_val(&Frame::new()), 14)
+        assert_eq!(size_of::<Frame>(), 14)
     }
 
     #[test]
