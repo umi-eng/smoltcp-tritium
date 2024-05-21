@@ -21,7 +21,7 @@ pub struct Server {
 
     // state
     last_heartbeat: Instant,
-    stream_start: bool,
+    tx_start: bool,
 }
 
 impl Server {
@@ -43,7 +43,7 @@ impl Server {
             last_heartbeat: now,
             bus_number,
             data_rate,
-            stream_start: false,
+            tx_start: false,
         }
     }
 
@@ -62,16 +62,11 @@ impl Server {
         // if client closes, close on our end as well
         if socket.state() == State::CloseWait {
             socket.close();
-            self.stream_start = false;
+            self.tx_start = false;
             return;
         }
 
         if socket.can_send() {
-            if !self.stream_start {
-                socket.send_slice(&[0; 30]).unwrap();
-                self.stream_start = true;
-            }
-
             if now - self.last_heartbeat > HEARTBEAT_INTERVAL.into() {
                 match self.write_heartbeat(socket) {
                     Ok(_) => self.last_heartbeat = now,
@@ -113,6 +108,13 @@ impl Server {
         frame: &impl embedded_can::Frame,
     ) -> Result<(), SendError> {
         let socket = sockets.get_mut::<Socket>(self.handle);
+
+        if socket.can_send() {
+            if !self.tx_start {
+                socket.send_slice(&[0; 30]).unwrap();
+                self.tx_start = true;
+            }
+        }
 
         if let Ok(frame) = Frame::from_frame(frame) {
             socket.send_slice(&frame.0).map(|_| ())
