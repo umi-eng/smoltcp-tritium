@@ -8,6 +8,9 @@
 pub mod tcp;
 pub mod udp;
 
+// re-export
+pub use tritiumcan as proto;
+
 use core::net::Ipv4Addr;
 use smoltcp::wire::IpAddress;
 
