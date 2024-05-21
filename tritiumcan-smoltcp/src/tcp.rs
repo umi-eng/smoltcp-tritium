@@ -1,8 +1,10 @@
 //! TCP protocol.
 
+use core::mem::size_of;
+
 use smoltcp::{
     iface::{SocketHandle, SocketSet},
-    socket::tcp::{SendError, Socket, SocketBuffer, State},
+    socket::tcp::{RecvError, SendError, Socket, SocketBuffer, State},
     time::Instant,
     wire::EthernetAddress,
 };
@@ -10,6 +12,7 @@ use tritiumcan::{
     datagram::{Frame, Packet},
     BusNumber, HEARTBEAT_INTERVAL, PORT,
 };
+use zerocopy::{AsBytes, FromZeroes};
 
 #[derive(Debug)]
 pub struct Server {
@@ -22,6 +25,7 @@ pub struct Server {
     // state
     last_heartbeat: Instant,
     tx_start: bool,
+    rx_start: bool,
 }
 
 impl Server {
@@ -44,6 +48,7 @@ impl Server {
             bus_number,
             data_rate,
             tx_start: false,
+            rx_start: false,
         }
     }
 
@@ -63,6 +68,7 @@ impl Server {
         if socket.state() == State::CloseWait {
             socket.close();
             self.tx_start = false;
+            self.rx_start = false;
             return;
         }
 
@@ -120,6 +126,31 @@ impl Server {
             socket.send_slice(&frame.0).map(|_| ())
         } else {
             Ok(())
+        }
+    }
+
+    pub fn recv_frame(
+        &mut self,
+        sockets: &mut SocketSet,
+    ) -> Result<Option<Frame>, RecvError> {
+        let socket = sockets.get_mut::<Socket>(self.handle);
+
+        if socket.can_recv() {
+            if !self.rx_start {
+                socket.recv_slice(&mut [0; 30]).ok();
+                self.rx_start = true;
+            }
+        } else {
+            return Ok(None);
+        }
+
+        let mut frame = Frame::new_zeroed();
+        let len = socket.recv_slice(frame.as_bytes_mut())?;
+
+        if len != size_of::<Frame>() {
+            Ok(None)
+        } else {
+            Ok(Some(frame))
         }
     }
 }
