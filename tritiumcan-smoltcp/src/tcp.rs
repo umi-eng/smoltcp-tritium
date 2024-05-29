@@ -115,11 +115,9 @@ impl Server {
     ) -> Result<(), SendError> {
         let socket = sockets.get_mut::<Socket>(self.handle);
 
-        if socket.can_send() {
-            if !self.tx_start {
-                socket.send_slice(&[0; 30]).unwrap();
-                self.tx_start = true;
-            }
+        if !self.tx_start {
+            socket.send_slice(&[0; 30])?;
+            self.tx_start = true;
         }
 
         if let Ok(frame) = Frame::from_frame(frame) {
