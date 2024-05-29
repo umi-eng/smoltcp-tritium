@@ -5,7 +5,7 @@ use core::mem::size_of;
 use smoltcp::{
     iface::{SocketHandle, SocketSet},
     socket::tcp::{RecvError, SendError, Socket, SocketBuffer, State},
-    time::Instant,
+    time::{Duration, Instant},
     wire::EthernetAddress,
 };
 use tritiumcan::{
@@ -39,7 +39,8 @@ impl Server {
         bus_number: BusNumber,
         data_rate: u16,
     ) -> Self {
-        let socket = Socket::new(rx_buffer, tx_buffer);
+        let mut socket = Socket::new(rx_buffer, tx_buffer);
+        socket.set_timeout(Some(Duration::from_secs(3)));
         let handle = sockets.add(socket);
 
         Self {
