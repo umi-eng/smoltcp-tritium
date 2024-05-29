@@ -15,6 +15,7 @@ use tritiumcan::{
 use zerocopy::{AsBytes, FromZeroes};
 
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct Server {
     // configuration
     handle: SocketHandle,

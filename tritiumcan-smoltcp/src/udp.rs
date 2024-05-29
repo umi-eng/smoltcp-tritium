@@ -19,6 +19,7 @@ use zerocopy::{AsBytes, FromZeroes};
 
 /// Server instance.
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct Server {
     // configuration
     handle: SocketHandle,
