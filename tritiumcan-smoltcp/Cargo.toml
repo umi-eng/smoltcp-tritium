@@ -10,7 +10,12 @@ bitfield = "0.14"
 bitflags = "2.4"
 defmt = { version = "0.3", optional = true }
 embedded-can = { workspace = true }
-smoltcp = { version = "0.11", default-features = false, features = ["socket-tcp", "socket-udp", "proto-ipv4", "medium-ethernet"] }
+smoltcp = { version = "0.11", default-features = false, features = [
+    "socket-tcp",
+    "socket-udp",
+    "proto-ipv4",
+    "medium-ethernet",
+] }
 zerocopy = { version = "0.7.34", features = ["derive"] }
 
 [features]
