@@ -9,8 +9,8 @@ use smoltcp::{
     wire::EthernetAddress,
 };
 use tritiumcan::{
-    datagram::{Frame, Packet},
-    BusNumber, HEARTBEAT_INTERVAL, PORT,
+    datagram::{Frame, Header, Packet},
+    BusNumber, HEARTBEAT_INTERVAL, PORT, PROTOCOL_VERSION,
 };
 use zerocopy::{AsBytes, FromZeroes};
 
@@ -75,6 +75,20 @@ impl Server {
         }
 
         if socket.can_send() {
+            if !self.tx_start {
+                let mut packet = Packet {
+                    header: Header::new(),
+                    frame: Frame::new_zeroed(),
+                };
+                packet.header.set_version(PROTOCOL_VERSION);
+                packet.header.set_bus_number(self.bus_number.into());
+                packet.header.set_client_identifier(0);
+
+                if socket.send_slice(packet.as_bytes()).is_ok() {
+                    self.tx_start = true;
+                }
+            }
+
             if now - self.last_heartbeat > HEARTBEAT_INTERVAL.into() {
                 match self.write_heartbeat(socket) {
                     Ok(_) => self.last_heartbeat = now,
