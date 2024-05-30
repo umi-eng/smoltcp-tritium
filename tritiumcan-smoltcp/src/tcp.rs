@@ -117,16 +117,13 @@ impl Server {
     ) -> Result<(), SendError> {
         let socket = sockets.get_mut::<Socket>(self.handle);
 
-        if !self.tx_start {
-            socket.send_slice(&[0; 30])?;
-            self.tx_start = true;
+        let frame = Frame::from_frame(frame).unwrap();
+
+        if socket.can_send() && self.tx_start {
+            socket.send_slice(frame.as_bytes()).map(|_| ())?
         }
 
-        if let Ok(frame) = Frame::from_frame(frame) {
-            socket.send_slice(&frame.0).map(|_| ())
-        } else {
-            Ok(())
-        }
+        Err(SendError::InvalidState)
     }
 
     /// Receive a CAN frame.
