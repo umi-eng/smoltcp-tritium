@@ -109,7 +109,7 @@ impl Server {
         socket.send_slice(&packet.frame.0).map(|_| ())
     }
 
-    /// Send can frame.
+    /// Send a CAN frame.
     pub fn send_frame(
         &mut self,
         sockets: &mut SocketSet,
@@ -129,6 +129,7 @@ impl Server {
         }
     }
 
+    /// Receive a CAN frame.
     pub fn recv_frame(
         &mut self,
         sockets: &mut SocketSet,
