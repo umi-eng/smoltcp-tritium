@@ -2,6 +2,11 @@
 //!
 //! This crate provides server and client implementations for the protocol used
 //! by the Tritium CAN-Ethernet adapter.
+//!
+//! # Optional features
+//!
+//! - `async` enable the async feature for `smoltcp` and the associated methods.
+//! - `defmt-03` enable defmt formatting attributes.
 
 #![no_std]
 
