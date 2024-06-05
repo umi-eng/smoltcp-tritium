@@ -165,4 +165,34 @@ impl Server {
             Ok(Some(frame))
         }
     }
+
+    /// Register a waker for receive operations.
+    ///
+    /// See [smoltcp documentation](https://docs.rs/smoltcp/latest/smoltcp/socket/tcp/struct.Socket.html#method.register_recv_waker)
+    /// for the rules around receive wakers.
+    #[cfg(feature = "async")]
+    pub fn register_recv_waker(
+        &mut self,
+        sockets: &mut SocketSet,
+        waker: &core::task::Waker,
+    ) {
+        let socket = sockets.get_mut::<Socket>(self.handle);
+
+        socket.register_recv_waker(waker);
+    }
+
+    /// Register a waker for send operations.
+    ///
+    /// See [smoltcp documentation](https://docs.rs/smoltcp/latest/smoltcp/socket/tcp/struct.Socket.html#method.register_send_waker)
+    /// for the rules around receive wakers.
+    #[cfg(feature = "async")]
+    pub fn register_send_waker(
+        &mut self,
+        sockets: &mut SocketSet,
+        waker: &core::task::Waker,
+    ) {
+        let socket = sockets.get_mut::<Socket>(self.handle);
+
+        socket.register_send_waker(waker);
+    }
 }

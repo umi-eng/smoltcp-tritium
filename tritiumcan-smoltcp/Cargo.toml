@@ -20,3 +20,4 @@ zerocopy = { version = "0.7.34", features = ["derive"] }
 
 [features]
 defmt-03 = ["dep:defmt", "smoltcp/defmt", "tritiumcan/defmt-03"]
+async = ["smoltcp/async"]
